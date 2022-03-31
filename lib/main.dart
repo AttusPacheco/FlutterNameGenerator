@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'Gerador de nomes',
-        theme: ThemeData(          // Add the 5 lines from here...
+        theme: ThemeData(
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.black87,
             foregroundColor: Colors.white,
@@ -36,12 +36,16 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
-  final _saved = <WordPair>{};
+  List<String> _saved = <String>[];
   final _biggerFont = const TextStyle(
-      fontSize: 18.0,
-      color: Colors.black87,
-      fontWeight: FontWeight.normal
-  );
+      fontSize: 18.0, color: Colors.black87, fontWeight: FontWeight.normal);
+
+  @override
+  void initState() {
+    _saved = <String>[];
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +72,8 @@ class _RandomWordsState extends State<RandomWords> {
             _suggestions.addAll(generateWordPairs().take(10));
           }
 
-          final alreadySaved = _saved.contains(_suggestions[index]);
+          final alreadySaved = _saved.contains(_suggestions[index].toString());
+
           return ListTile(
             title: Text(
               _suggestions[index].asPascalCase,
@@ -82,9 +87,9 @@ class _RandomWordsState extends State<RandomWords> {
             onTap: () {
               setState(() {
                 if (alreadySaved) {
-                  _saved.remove(_suggestions[index]);
+                  _saved.remove(_suggestions[index].toString());
                 } else {
-                  _saved.add(_suggestions[index]);
+                  _saved.add(_suggestions[index].toString());
                 }
               });
             },
@@ -98,25 +103,37 @@ class _RandomWordsState extends State<RandomWords> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) {
-          final tiles = _saved.map((pair) {
-              return ListTile(
-                title: Text(
-                  pair.asPascalCase,
-                  style: _biggerFont,
-                ),
-              );
-            },
-          );
-          final divided = tiles.isNotEmpty
-              ? ListTile.divideTiles(context: context, tiles: tiles).toList()
-              : <Widget>[];
-
           return Scaffold(
             appBar: AppBar(
               title: const Text('Sugestões de nomes salvos'),
               backgroundColor: Colors.redAccent,
-             ),
-            body: ListView(children: divided),
+            ),
+            body: ListView.builder(
+              itemCount: _saved.length,
+              itemBuilder: (BuildContext context, int count) {
+                String pair = _saved[count];
+
+                return Dismissible(
+                  onDismissed: (direction) {
+                    setState(() {
+                      _saved.remove(pair);
+                    });
+                  },
+                  key: Key(_saved[count]),
+                  child: ListTile(
+                    title: Text(
+                      pair,
+                      style: _biggerFont,
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_back_ios_outlined,
+                      color: Colors.black87,
+                      semanticLabel: "Remover",
+                    ),
+                  ),
+                );
+              }
+            ),
           );
         },
       ),
